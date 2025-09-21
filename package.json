@@ -7,7 +7,7 @@
     "dev": "next dev",
     "emulators": "firebase emulators:start --only firestore,storage --project ai-stylist-app-fcb50",
     "build": "next build",
-    "start": "node server.js",
+    "start": "HOST=0.0.0.0 PORT=$PORT node .next/standalone/server.js",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0"
