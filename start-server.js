@@ -3,7 +3,6 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-// Railway assigns PORT; default back to 8080 for local dev
 const port = process.env.PORT || 8080;
 const host = '0.0.0.0';
 
@@ -22,4 +21,3 @@ const child = spawn('node', [serverScript], {
 });
 
 child.on('exit', code => process.exit(code));
-
