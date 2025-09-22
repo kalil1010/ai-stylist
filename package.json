@@ -7,7 +7,7 @@
     "dev": "next dev",
     "emulators": "firebase emulators:start --only firestore,storage --project ai-stylist-app-fcb50",
     "build": "next build && cp -R .next/static .next/standalone/.next && if [ -d public ]; then cp -R public .next/standalone/public; fi",
-    "start": "cd .next/standalone && node start-server.js",
+    "start": "node start-server.js",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0"
