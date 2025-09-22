@@ -8,7 +8,7 @@ import { ToastProvider } from '@/components/ui/toast'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI Stylist - Your Personal Fashion Assistant',
+  title: 'ZMODA AI - Your Personal Fashion Assistant',
   description: 'Get personalized outfit recommendations based on weather, occasion, and your personal style preferences.',
 }
 

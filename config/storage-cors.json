@@ -1,0 +1,20 @@
+[
+  {
+    "origin": [
+      "https://zmodaai.com",
+      "https://www.zmodaai.com"
+    ],
+    "method": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "OPTIONS"
+    ],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

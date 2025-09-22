@@ -43,10 +43,11 @@ export const storage = getStorage(
 );
 
 // Toggle emulators explicitly so production never leaks localhost URLs.
+const emulatorSetting = process.env.NEXT_PUBLIC_USE_EMULATORS?.toLowerCase();
 const shouldUseEmulators =
-  process.env.NEXT_PUBLIC_USE_EMULATORS === 'true' ||
-  (process.env.NODE_ENV !== 'production' &&
-    process.env.NEXT_PUBLIC_USE_EMULATORS !== 'false');
+  process.env.NODE_ENV !== 'production' &&
+  emulatorSetting !== 'false' &&
+  emulatorSetting !== '0';
 
 if (shouldUseEmulators) {
   const host = process.env.NEXT_PUBLIC_EMULATOR_HOST || '127.0.0.1';
