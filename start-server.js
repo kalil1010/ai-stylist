@@ -1,27 +1,25 @@
+#!/usr/bin/env node
+
 const { spawn } = require('child_process');
 const path = require('path');
 
-// Get Railway's dynamic port, fallback to 8080
+// Railway assigns PORT; default back to 8080 for local dev
 const port = process.env.PORT || 8080;
+const host = '0.0.0.0';
 
-// Set environment variables for the standalone server
 process.env.PORT = port;
-process.env.HOSTNAME = '0.0.0.0';
+process.env.HOSTNAME = host;
 
-// Start the standalone server in its directory
-const serverPath = path.join(__dirname, '.next', 'standalone', 'server.js');
-const child = spawn('node', [serverPath], {
-  cwd: path.join(__dirname, '.next', 'standalone'),
+const standaloneDir = path.join(__dirname, '.next', 'standalone');
+const serverScript = path.join(standaloneDir, 'server.js');
+
+console.log(`Starting standalone server on http://${host}:${port}`);
+
+const child = spawn('node', [serverScript], {
+  cwd: standaloneDir,
   stdio: 'inherit',
-  env: {
-    ...process.env,
-    PORT: port,
-    HOSTNAME: '0.0.0.0'
-  }
+  env: process.env
 });
 
-console.log(`Starting server on 0.0.0.0:${port}`);
+child.on('exit', code => process.exit(code));
 
-child.on('exit', (code) => {
-  process.exit(code);
-});
