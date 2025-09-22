@@ -1,20 +1,20 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ClothingItem } from '@/types/clothing'
-import { getColorName } from '@/lib/imageAnalysis'
-import { Trash2, Eye } from 'lucide-react'
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ClothingItem } from '@/types/clothing';
+import { getColorName } from '@/lib/imageAnalysis';
+import { Trash2, Eye } from 'lucide-react';
 
-interface ClosetItemProps {
-  item: ClothingItem
-  onDelete: (item: ClothingItem) => void
-  onView: (item: ClothingItem) => void
+export interface ClosetItemProps {
+  item: ClothingItem;
+  onDelete: (item: ClothingItem) => void;
+  onView: (item: ClothingItem) => void;
 }
 
 export function ClosetItem({ item, onDelete, onView }: ClosetItemProps) {
-  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -34,7 +34,6 @@ export function ClosetItem({ item, onDelete, onView }: ClosetItemProps) {
           onClick={() => onView(item)}
         />
       </div>
-      
       <CardContent className="p-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -42,17 +41,16 @@ export function ClosetItem({ item, onDelete, onView }: ClosetItemProps) {
               {item.garmentType}
               {item.primaryHex && (
                 <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]">
-                  <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: item.primaryHex }} />
+                  <span
+                    className="w-3 h-3 rounded-full border"
+                    style={{ backgroundColor: item.primaryHex }}
+                  />
                   Primary
                 </span>
               )}
             </span>
             <div className="flex space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onView(item)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => onView(item)}>
                 <Eye className="h-4 w-4" />
               </Button>
               <Button
@@ -65,13 +63,13 @@ export function ClosetItem({ item, onDelete, onView }: ClosetItemProps) {
               </Button>
             </div>
           </div>
-          
+
           {item.description && (
             <p className="text-xs text-gray-600 truncate">
               {item.description}
             </p>
           )}
-          
+
           <div className="flex flex-wrap items-center gap-2">
             {item.dominantColors.slice(0, 3).map((color, index) => (
               <div key={index} className="inline-flex items-center gap-1">
@@ -80,7 +78,9 @@ export function ClosetItem({ item, onDelete, onView }: ClosetItemProps) {
                   style={{ backgroundColor: color }}
                 />
                 <span className="text-[11px] text-gray-600">
-                  {(item.colorNames && item.colorNames[index]) ? item.colorNames[index] : getColorName(color)}
+                  {item.colorNames && item.colorNames[index]
+                    ? item.colorNames[index]
+                    : getColorName(color)}
                 </span>
               </div>
             ))}
@@ -88,5 +88,7 @@ export function ClosetItem({ item, onDelete, onView }: ClosetItemProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
+
+export default ClosetItem;

@@ -1,19 +1,21 @@
-'use client'
+// src/components/closet/ItemDetailModal.tsx
 
-import React from 'react'
-import { ClothingItem } from '@/types/clothing'
-import { getColorName } from '@/lib/imageAnalysis'
-import { X, Calendar, Palette } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+'use client';
 
-interface ItemDetailModalProps {
-  item: ClothingItem | null
-  isOpen: boolean
-  onClose: () => void
+import React from 'react';
+import { ClothingItem } from '@/types/clothing';
+import { getColorName } from '@/lib/imageAnalysis';
+import { X, Calendar, Palette } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+export interface ItemDetailModalProps {
+  item: ClothingItem | null;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps) {
-  if (!isOpen || !item) return null
+  if (!isOpen || !item) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -24,7 +26,6 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
             <X className="h-5 w-5" />
           </Button>
         </div>
-        
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -34,7 +35,6 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
                 className="w-full rounded-lg shadow-md"
               />
             </div>
-            
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold capitalize">
@@ -44,7 +44,6 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
                   <p className="text-gray-600 mt-1">{item.description}</p>
                 )}
               </div>
-              
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Palette className="h-5 w-5 text-gray-500" />
@@ -69,7 +68,6 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
                   ))}
                 </div>
               </div>
-              
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-5 w-5 text-gray-500" />
@@ -83,18 +81,18 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
                   })}
                 </p>
               </div>
-              
               {item.brand && (
                 <div>
                   <span className="font-medium">Brand:</span>
                   <span className="ml-2 text-gray-600">{item.brand}</span>
                 </div>
               )}
-              
               {item.season && item.season !== 'all' && (
                 <div>
                   <span className="font-medium">Season:</span>
-                  <span className="ml-2 text-gray-600 capitalize">{item.season}</span>
+                  <span className="ml-2 text-gray-600 capitalize">
+                    {item.season}
+                  </span>
                 </div>
               )}
             </div>
@@ -102,5 +100,7 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
         </div>
       </div>
     </div>
-  )
+  );
 }
+
+export default ItemDetailModal;
