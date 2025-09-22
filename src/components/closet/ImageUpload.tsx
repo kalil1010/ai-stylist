@@ -14,24 +14,25 @@ import { collection, addDoc } from 'firebase/firestore';
 import { ClothingItem } from '@/types/clothing';
 import { OutfitColorPlan } from '@/types/palette';
 
-export function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem) => void }) {
+export default function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem) => void }) {
   const { user } = useAuth();
-  const [file, setFile] = useState<File|null>(null);
-  const [preview, setPreview] = useState<string|null>(null);
-  const [analysis, setAnalysis] = useState<{ dominantColors: string[] }|null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<{ dominantColors: string[] } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [plan, setPlan] = useState<OutfitColorPlan>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Read file to data URL
-  const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
+  // Convert File to Data URL
+  const toDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
 
   // Analyze handler
   const analyze = async () => {
@@ -39,7 +40,6 @@ export function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem
     setIsAnalyzing(true);
     try {
       const dataUrl = await toDataUrl(file);
-      // Rough local then AI analysis
       const rough = await analyzeImageColors(file, 'enhanced');
       const res = await fetch('/api/analyze-image', {
         method: 'POST',
@@ -57,7 +57,7 @@ export function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem
   };
 
   // Upload handler
-  const uploadItem = async () => {
+  const handleUpload = async () => {
     if (!file || !analysis || !user) return;
     setIsUploading(true);
     try {
@@ -77,14 +77,14 @@ export function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem
       setFile(null);
       setPreview(null);
       setAnalysis(null);
-    } catch (e) {
+    } catch {
       toast({ variant: 'error', title: 'Upload failed' });
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Save palette
+  // Save palette handler
   const savePalette = async () => {
     if (!user || !analysis) return;
     try {
@@ -102,14 +102,15 @@ export function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Upload className="mr-2 h-5 w-5" /> Add to Closet
+          <Upload className="mr-2 h-5 w-5" />
+          Add to Closet
         </CardTitle>
-        <CardDescription>Upload and analyze your clothing item</CardDescription>
+        <CardDescription>Upload and analyze your item</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="border-dashed border-2 p-6 text-center">
+        <div className="border-2 border-dashed p-6 text-center">
           {preview ? (
-            <img src={preview} className="mx-auto max-h-48" />
+            <img src={preview} className="mx-auto max-h-48 rounded" />
           ) : (
             <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
           )}
@@ -134,7 +135,7 @@ export function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem
 
         {analysis && (
           <div className="space-y-4">
-            <Button onClick={uploadItem} disabled={isUploading}>
+            <Button onClick={handleUpload} disabled={isUploading}>
               {isUploading ? 'Adding to Closet...' : 'Add to Closet'}
             </Button>
             <Button variant="outline" onClick={savePalette}>
@@ -146,5 +147,3 @@ export function ImageUpload({ onItemAdded }: { onItemAdded?: (item: ClothingItem
     </Card>
   );
 }
-
-export default ImageUpload;
