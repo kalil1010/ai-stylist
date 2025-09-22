@@ -1,15 +1,15 @@
-// src/app/closet/page.tsx
+'use client';
 
-'use client'
-
-import { ClosetView } from '@/components/closet/ClosetView'
-import { useAuth } from '@/contexts/AuthContext'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import ImageUpload from '@/components/closet/ImageUpload';
+import { ClosetView } from '@/components/closet/ClosetView';
 
 export default function ClosetPage() {
-  const { user, loading } = useAuth()
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -23,7 +23,7 @@ export default function ClosetPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -41,7 +41,7 @@ export default function ClosetPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -51,11 +51,15 @@ export default function ClosetPage() {
           My Digital Closet
         </h1>
         <p className="text-gray-600">
-          Organize your clothing collection and get insights into your wardrobe.
+          Organize your clothing collection and add items below.
         </p>
       </div>
-      
+
+      <div className="mb-8">
+        <ImageUpload onItemAdded={() => { /* handle new item */ }} />
+      </div>
+
       <ClosetView />
     </div>
-  )
+  );
 }
