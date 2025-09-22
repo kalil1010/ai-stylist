@@ -42,26 +42,55 @@ export const storage = getStorage(
     : undefined
 );
 
-// Connect to emulators only in development
-if (
-  process.env.NODE_ENV === 'development' &&
-  typeof window !== 'undefined'
-) {
+// Toggle emulators explicitly so production never leaks localhost URLs.
+const shouldUseEmulators =
+  process.env.NEXT_PUBLIC_USE_EMULATORS === 'true' ||
+  (process.env.NODE_ENV !== 'production' &&
+    process.env.NEXT_PUBLIC_USE_EMULATORS !== 'false');
+
+if (shouldUseEmulators) {
   const host = process.env.NEXT_PUBLIC_EMULATOR_HOST || '127.0.0.1';
+  const authPort = Number(process.env.NEXT_PUBLIC_AUTH_EMULATOR_PORT || 9099);
+  const firestorePort = Number(
+    process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_PORT || 8080
+  );
+  const storagePort = Number(
+    process.env.NEXT_PUBLIC_STORAGE_EMULATOR_PORT || 9199
+  );
 
-  // Auth emulator
-  connectAuthEmulator(auth, `http://${host}:9199`, {
-    disableWarnings: true
-  });
-  console.info(`[Firebase] Connected Auth emulator at ${host}:9199`);
+  const globalScope = globalThis as typeof globalThis & {
+    __FIREBASE_AUTH_EMULATOR__?: boolean;
+    __FIREBASE_FIRESTORE_EMULATOR__?: boolean;
+    __FIREBASE_STORAGE_EMULATOR__?: boolean;
+  };
 
-  // Firestore emulator
-  connectFirestoreEmulator(db, host, 8080);
-  console.info(`[Firebase] Connected Firestore emulator at ${host}:8080`);
+  if (!globalScope.__FIREBASE_FIRESTORE_EMULATOR__) {
+    connectFirestoreEmulator(db, host, firestorePort);
+    globalScope.__FIREBASE_FIRESTORE_EMULATOR__ = true;
+    console.info(
+      `[Firebase] Connected Firestore emulator at ${host}:${firestorePort}`
+    );
+  }
 
-  // Storage emulator
-  connectStorageEmulator(storage, host, 9199);
-  console.info(`[Firebase] Connected Storage emulator at ${host}:9199`);
+  if (typeof window !== 'undefined') {
+    if (!globalScope.__FIREBASE_AUTH_EMULATOR__) {
+      connectAuthEmulator(auth, `http://${host}:${authPort}`, {
+        disableWarnings: true
+      });
+      globalScope.__FIREBASE_AUTH_EMULATOR__ = true;
+      console.info(
+        `[Firebase] Connected Auth emulator at ${host}:${authPort}`
+      );
+    }
+
+    if (!globalScope.__FIREBASE_STORAGE_EMULATOR__) {
+      connectStorageEmulator(storage, host, storagePort);
+      globalScope.__FIREBASE_STORAGE_EMULATOR__ = true;
+      console.info(
+        `[Firebase] Connected Storage emulator at ${host}:${storagePort}`
+      );
+    }
+  }
 }
 
 export default app;
