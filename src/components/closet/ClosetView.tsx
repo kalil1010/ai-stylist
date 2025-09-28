@@ -1,110 +1,160 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  deleteDoc,
-  doc
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import ImageUpload from './ImageUpload';
-import { ClosetItem } from './ClosetItem';
-import { ItemDetailModal } from './ItemDetailModal';
-import { ClothingItem } from '@/types/clothing';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent
-} from '@/components/ui/card';
-import { Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react'
+import { ClothingItem } from '@/types/clothing'
+import { getUserClothing, deleteClothingItem, groupClothingByType } from '@/lib/closet'
+import { ClosetItem } from './ClosetItem'
+import { ItemDetailModal } from './ItemDetailModal'
+import ImageUpload from './ImageUpload'
+import { useAuth } from '@/contexts/AuthContext'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Shirt, Package, Loader2 } from 'lucide-react'
 
 export function ClosetView() {
-  const { user } = useAuth();
-  const [items, setItems] = useState<ClothingItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  const { user } = useAuth()
+  const [items, setItems] = useState<ClothingItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [activeTab, setActiveTab] = useState('all')
 
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      setLoading(true);
-      const q = query(
-        collection(db, 'clothing'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
-      const snap = await getDocs(q);
-      const list: ClothingItem[] = [];
-      snap.forEach((d) => {
-        const data = d.data() as any;
-        list.push({
-          id: d.id,
-          userId: data.userId,
-          imageUrl: data.imageUrl,
-          garmentType: data.garmentType,
-          dominantColors: data.dominantColors,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate(),
-          ...(data.primaryHex && { primaryHex: data.primaryHex }),
-          ...(data.colorNames && { colorNames: data.colorNames }),
-          ...(data.aiMatches && { aiMatches: data.aiMatches }),
-          description: data.description || ''
-        });
-      });
-      setItems(list);
-      setLoading(false);
-    })();
-  }, [user]);
+    if (user) {
+      loadItems()
+    }
+  }, [user])
 
-  const handleDelete = async (item: ClothingItem) => {
-    await deleteDoc(doc(db, 'clothing', item.id));
-    setItems((prev) => prev.filter((i) => i.id !== item.id));
-  };
+  const loadItems = async () => {
+    if (!user) return
 
-  const handleView = (item: ClothingItem) => {
-    setSelectedItem(item);
-  };
+    setLoading(true)
+    try {
+      const userItems = await getUserClothing(user.uid)
+      setItems(userItems)
+    } catch (error) {
+      console.error('Failed to load items:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const handleClose = () => {
-    setSelectedItem(null);
-  };
+  const handleDeleteItem = async (item: ClothingItem) => {
+    if (!confirm('Are you sure you want to delete this item?')) return
+
+    try {
+      await deleteClothingItem(item)
+      setItems((prev) => prev.filter((i) => i.id !== item.id))
+    } catch (error) {
+      console.error('Failed to delete item:', error)
+      alert('Failed to delete item. Please try again.')
+    }
+  }
+
+  const handleViewItem = (item: ClothingItem) => {
+    setSelectedItem(item)
+    setShowModal(true)
+  }
+
+  const handleItemAdded = (newItem: ClothingItem) => {
+    setItems((prev) => [newItem, ...prev])
+  }
+
+  const groupedItems = groupClothingByType(items)
+  const garmentTypes = ['all', 'top', 'bottom', 'footwear', 'outerwear', 'accessory']
+
+  const getItemsForTab = (tab: string) => {
+    return tab === 'all' ? items : groupedItems[tab] || []
+  }
+
+  const getTabLabel = (type: string) => {
+    const labels = {
+      all: 'All Items',
+      top: 'Tops',
+      bottom: 'Bottoms',
+      footwear: 'Footwear',
+      outerwear: 'Outerwear',
+      accessory: 'Accessories',
+    }
+    return labels[type as keyof typeof labels] || type
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading your closet...</span>
+      </div>
+    )
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>My Closet</CardTitle>
-        <CardDescription>Upload and manage your items</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <ImageUpload onItemAdded={(item) => setItems((prev) => [item, ...prev])} />
+    <div className="space-y-6">
+      <div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Package className="mr-2 h-5 w-5" />
+              My Closet ({items.length} items)
+            </CardTitle>
+            <CardDescription>
+              Manage your clothing collection and view color analysis
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-6">
+                {garmentTypes.map((type) => (
+                  <TabsTrigger key={type} value={type} className="text-xs">
+                    {getTabLabel(type)}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-        {loading && <div>Loading…</div>}
-        {!loading && items.length === 0 && <div>No items yet.</div>}
+              {garmentTypes.map((type) => (
+                <TabsContent key={type} value={type} className="mt-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {getItemsForTab(type).map((item) => (
+                      <ClosetItem
+                        key={item.id}
+                        item={item}
+                        onDelete={handleDeleteItem}
+                        onView={handleViewItem}
+                      />
+                    ))}
+                  </div>
 
-        {items.map((item) => (
-          <ClosetItem
-            key={item.id}
-            item={item}
-            onDelete={handleDelete}
-            onView={handleView}
-          />
-        ))}
+                  {getItemsForTab(type).length === 0 && (
+                    <div className="text-center py-12">
+                      <Shirt className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">
+                        No {type === 'all' ? 'items' : getTabLabel(type).toLowerCase()}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {type === 'all'
+                          ? 'Start building your digital closet by adding your first item.'
+                          : `Add some ${getTabLabel(type).toLowerCase()} to your closet.`}
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
 
-        <ItemDetailModal
-          item={selectedItem}
-          isOpen={!!selectedItem}
-          onClose={handleClose}
-        />
-      </CardContent>
-    </Card>
-  );
+      <div>
+        <ImageUpload onItemAdded={handleItemAdded} />
+      </div>
+
+      <ItemDetailModal
+        item={selectedItem}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
+    </div>
+  )
 }
 
-export default ClosetView;
+export default ClosetView
