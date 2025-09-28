@@ -1,6 +1,7 @@
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore'
+import { normalizeStorageUrl, extractStoragePath } from '@/lib/storage'
 import { deleteObject, ref } from 'firebase/storage'
-import { db, storage } from '@/lib/firebase'
+import { db, storage, isUsingEmulators } from '@/lib/firebase'
 import { ClothingItem } from '@/types/clothing'
 
 export async function getUserClothing(userId: string): Promise<ClothingItem[]> {
@@ -13,16 +14,48 @@ export async function getUserClothing(userId: string): Promise<ClothingItem[]> {
     
     const querySnapshot = await getDocs(q)
     const items: ClothingItem[] = []
-    
-    querySnapshot.forEach((doc) => {
-      items.push({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt.toDate(),
-        updatedAt: doc.data().updatedAt.toDate(),
-      } as ClothingItem)
-    })
-    
+    const pendingUpdates: Promise<void>[] = []
+
+    for (const snapshotDoc of querySnapshot.docs) {
+      const data = snapshotDoc.data() as Record<string, any>
+      const rawUrl = typeof data.imageUrl === 'string' ? data.imageUrl : ''
+      const imageUrl = normalizeStorageUrl(rawUrl)
+      const storagePath = data.storagePath || extractStoragePath(rawUrl)
+
+      const createdAtSource = data.createdAt
+      const updatedAtSource = data.updatedAt
+      const createdAt = createdAtSource?.toDate ? createdAtSource.toDate() : (createdAtSource ? new Date(createdAtSource) : new Date())
+      const updatedAt = updatedAtSource?.toDate ? updatedAtSource.toDate() : (updatedAtSource ? new Date(updatedAtSource) : createdAt)
+
+      const docData = {
+        id: snapshotDoc.id,
+        ...data,
+        imageUrl,
+        ...(storagePath ? { storagePath } : {}),
+        createdAt,
+        updatedAt,
+      } as ClothingItem
+
+      items.push(docData)
+
+      if (!isUsingEmulators) {
+        const updates: Record<string, any> = {}
+        if (rawUrl && rawUrl !== imageUrl) {
+          updates.imageUrl = imageUrl
+        }
+        if (storagePath && !data.storagePath) {
+          updates.storagePath = storagePath
+        }
+        if (Object.keys(updates).length > 0) {
+          pendingUpdates.push(updateDoc(doc(db, 'clothing', snapshotDoc.id), updates))
+        }
+      }
+    }
+
+    if (pendingUpdates.length > 0) {
+      await Promise.allSettled(pendingUpdates)
+    }
+
     return items
   } catch (error) {
     console.error('Failed to fetch clothing items:', error)
@@ -36,7 +69,8 @@ export async function deleteClothingItem(item: ClothingItem): Promise<void> {
     await deleteDoc(doc(db, 'clothing', item.id))
     
     // Delete image from Storage
-    const imageRef = ref(storage, item.imageUrl)
+    const targetPath = item.storagePath || extractStoragePath(item.imageUrl) || item.imageUrl
+    const imageRef = ref(storage, targetPath)
     await deleteObject(imageRef)
   } catch (error) {
     console.error('Failed to delete clothing item:', error)

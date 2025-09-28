@@ -5,13 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { normalizeStorageUrl } from '@/lib/storage'
 import { getMatchingColors, analyzeImageColors } from '@/lib/imageAnalysis'
 import { useToast } from '@/components/ui/toast'
 import { ClothingItem } from '@/types/clothing'
 import { useAuth } from '@/contexts/AuthContext'
 import { collection, addDoc } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { db, storage } from '@/lib/firebase'
+import { db, storage, isUsingEmulators } from '@/lib/firebase'
 import { savePaletteForUser } from '@/lib/palette'
 
 interface ImageUploadProps {
@@ -148,12 +149,15 @@ export function ImageUpload({ onItemAdded }: ImageUploadProps) {
       // Upload image to Firebase Storage
       const storageRef = ref(storage, `closet/${user.uid}/${Date.now()}_${selectedFile.name}`)
       const snapshot = await uploadBytes(storageRef, selectedFile)
-      const imageUrl = await getDownloadURL(snapshot.ref)
+      const rawUrl = await getDownloadURL(snapshot.ref)
+      const imageUrl = isUsingEmulators ? rawUrl : normalizeStorageUrl(rawUrl)
+      const storagePath = snapshot.ref.fullPath
 
       // Create clothing item document
       const clothingItem: Omit<ClothingItem, 'id'> = {
         userId: user.uid,
         imageUrl,
+        storagePath,
         garmentType: garmentType as ClothingItem['garmentType'],
         dominantColors: analysis.dominantColors,
         ...(aiPrimaryHex ? { primaryHex: aiPrimaryHex } : {}),

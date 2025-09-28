@@ -44,12 +44,12 @@ export const storage = getStorage(
 
 // Toggle emulators explicitly so production never leaks localhost URLs.
 const emulatorSetting = process.env.NEXT_PUBLIC_USE_EMULATORS?.toLowerCase();
-const shouldUseEmulators =
+export const isUsingEmulators =
   process.env.NODE_ENV !== 'production' &&
   emulatorSetting !== 'false' &&
   emulatorSetting !== '0';
 
-if (shouldUseEmulators) {
+if (isUsingEmulators) {
   const host = process.env.NEXT_PUBLIC_EMULATOR_HOST || '127.0.0.1';
   const authPort = Number(process.env.NEXT_PUBLIC_AUTH_EMULATOR_PORT || 9099);
   const firestorePort = Number(

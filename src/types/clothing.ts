@@ -2,6 +2,7 @@ export interface ClothingItem {
   id: string
   userId: string
   imageUrl: string
+  storagePath?: string
   garmentType: 'top' | 'bottom' | 'footwear' | 'accessory' | 'outerwear'
   dominantColors: string[]
   // Optional AI-enriched fields
